@@ -1,8 +1,9 @@
-package pl.zajonz.coding.teacher.model;
+package pl.zajonz.coding.teacher.model.dto;
 
 import lombok.Builder;
 import lombok.Getter;
 import pl.zajonz.coding.common.Language;
+import pl.zajonz.coding.teacher.model.Teacher;
 
 import java.util.Set;
 

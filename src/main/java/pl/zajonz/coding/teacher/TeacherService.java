@@ -1,10 +1,12 @@
 package pl.zajonz.coding.teacher;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
 
+import java.text.MessageFormat;
 import java.util.List;
 
 @Service
@@ -17,8 +19,8 @@ public class TeacherService {
         return teacherRepository.findAllByDeletedFalse();
     }
 
-    public void save(Teacher teacher){
-        teacherRepository.save(teacher);
+    public Teacher save(Teacher teacher){
+        return teacherRepository.save(teacher);
     }
 
     public List<Teacher> findAllByLanguagesContainingAndDeletedFalse(Language language) {
@@ -27,5 +29,11 @@ public class TeacherService {
 
     public void deleteById(int id){
         teacherRepository.deleteById(id);
+    }
+
+    public Teacher findById(int id) {
+        return teacherRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Teacher with id={0} has not been found", id)));
     }
 }

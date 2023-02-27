@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edycja studenta</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<style>
+    .buttons {
+        height: 20px;
+        width: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+<body onload="populateTeachers('langInput', 'teacherSelect')">
+<h1>Edycja studenta</h1>
+<h2><a th:href="@{/students/list}">Lista studentów</a></h2>
+<table>
+    <tr>
+        <td><label>Id:</label></td>
+        <td>
+            <input id="studentId" type="text" th:value="${student.id}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Imię:</label></td>
+        <td>
+            <input type="text" th:value="${student.firstName}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Nazwisko:</label></td>
+        <td>
+            <input type="text" th:value="${student.lastName}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Język:</label></td>
+        <td>
+            <input id="langInput" type="text" th:value="${student.language}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Nauczyciel:</label></td>
+        <td>
+            <select id="teacherSelect" name="teacher">
+                <option value="" disabled selected>wybierz nauczyciela</option>
+            </select>
+        </td>
+    </tr>
+</table>
+<div class="buttons">
+    <button onclick="updateStudent()">Zapisz</button>
+    <button type="reset">Wyczyść</button>
+</div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+    function populateTeachers(lLabelId, tSelectId) {
+        let lLabel = document.getElementById(lLabelId);
+        let tSelect = document.getElementById(tSelectId);
+        let url = "/teachers?language=" + lLabel.value;
+        $.getJSON(url, function (data) {
+            tSelect.innerHTML = '<option value="" disabled selected>wybierz nauczyciela</option>';
+            data.forEach(teacher => {
+                let option = '<option value="' + teacher.id + '">' + teacher.firstName + ' ' + teacher.lastName + '</option>';
+                tSelect.innerHTML += option;
+            })
+        });
+    }
+
+    function updateStudent() {
+        let teacherId = document.getElementById('teacherSelect').value;
+        let studentId = document.getElementById('studentId').value;
+        let url = "/students/edit?teacherId=" + teacherId + "&studentId=" + studentId;
+        $.ajax({
+            url: url,
+            type: 'PATCH',
+            success: function () {
+                window.location.href = "/students/list";
+            },
+            error: function () {
+                alert("Wystąpił błąd");
+            }
+        });
+    }
+
+</script>

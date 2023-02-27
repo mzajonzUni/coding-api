@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edycja lekcji</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<style>
+    .buttons {
+        height: 20px;
+        width: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+<body>
+<h1>Edycja lekcji</h1>
+<h2><a th:href="@{/lessons/list}">Edycja lekcji</a></h2>
+<table>
+    <tr>
+        <td><label>Id:</label></td>
+        <td>
+            <input id="lessonIdInput" type="text" th:value="${lesson.id}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Nauczyciel:</label></td>
+        <td>
+            <input id="tInputId" type="text" th:value="${lesson.teacher.id}" hidden>
+            <input type="text" th:value="${lesson.teacher}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Student:</label></td>
+        <td>
+            <input type="text" th:value="${lesson.student}" disabled>
+        </td>
+    </tr>
+    <tr>
+        <td><label>Termin:</label></td>
+        <td>
+            <input id="date" onchange="checkTerm(this.id,'tInputId')" type="datetime-local" th:value="${lesson.term}"
+                   placeholder="Termin"/>
+        </td>
+    </tr>
+</table>
+<div class="buttons">
+    <button id="updateButton" onclick="updateLesson()">Zapisz</button>
+    <button type="reset">Wyczyść</button>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+
+    function checkTerm(dInputId, tInputId) {
+        let dInput = document.getElementById(dInputId);
+        let tInput = document.getElementById(tInputId);
+        let uButton = document.getElementById('updateButton');
+        let url = "/lessons?term=" + dInput.value + "&teacherId=" + tInput.value;
+        $.getJSON(url, function (data) {
+            if (data === false) {
+                dInput.value = "";
+                uButton.disabled = true;
+            }else{
+                uButton.disabled = false;
+            }
+        });
+    }
+
+    function updateLesson() {
+        let date = document.getElementById('date').value;
+        let lessonId = document.getElementById('lessonIdInput').value;
+        let url = '/lessons/edit?term=' + date + '&lessonId=' + lessonId;
+        $.ajax({
+            url: url,
+            type: 'PATCH',
+            success: function () {
+                window.location.href = '/lessons/list';
+            },
+            error: function () {
+                window.alert('Wystąpił błąd');
+            }
+        });
+    }
+
+</script>
+

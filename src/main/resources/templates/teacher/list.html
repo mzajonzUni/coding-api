@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Nauczyciele</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-
 <h1>Nauczyciele</h1>
-
+<h2><a th:href="@{/lessons/list}">Lista lekcji</a></h2>
+<h2><a th:href="@{/students/list}">Lista studentów</a></h2>
+<h2><a th:href="@{/teachers/add}">Dodaj nauczyciela</a></h2>
 <table>
     <thead>
     <tr>
-        <th> ID </th>
-        <th> Imię </th>
-        <th> Nazwisko </th>
+        <th> ID</th>
+        <th> Imię</th>
+        <th> Nazwisko</th>
+        <th> Akcja</th>
     </tr>
     </thead>
     <tbody>
@@ -21,10 +24,28 @@
         <td th:text="${teacher.id}"></td>
         <td th:text="${teacher.firstName}"></td>
         <td th:text="${teacher.lastName}"></td>
+        <td>
+            <button th:id="${teacher.id}" onclick="deleteTeacher(this.id)" th:text="Usuń"/>
+        </td>
     </tr>
     </tbody>
 </table>
-
-
 </body>
 </html>
+
+<script type="text/javascript">
+    function deleteTeacher(teacherId) {
+        let url = "/teachers/delete/" + teacherId;
+        $.ajax({
+            url: url,
+            type: 'DELETE',
+            success: function () {
+                window.location.href = "/teachers/list";
+            },
+            error: function () {
+                alert("Wystąpił błąd");
+            }
+        });
+    }
+
+</script>

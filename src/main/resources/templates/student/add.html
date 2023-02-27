@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodawanie studenta</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<style>
+    .buttons {
+        height: 20px;
+        width: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+<body>
+<h1>Dodawanie studenta</h1>
+<h2><a th:href="@{/students/list}">Lista studentów</a></h2>
+<form th:action="@{/students/add}" method="post" th:object="${student}">
+    <table>
+        <tr>
+            <td><label>Imię:</label></td>
+            <td><input type="text" th:field="*{firstName}"/></td>
+        </tr>
+        <tr>
+            <td><label>Nazwisko:</label></td>
+            <td><input type="text" th:field="*{lastName}"/></td>
+        </tr>
+        <tr>
+            <td><label>Język:</label></td>
+            <td>
+                <select id="langSelect" name="language" onchange="populateTeachers(this.id, 'teacherSelect')">
+                    <option value="" disabled selected>wybierz język</option>
+                    <option th:each="language : ${languages}" th:text="${language}" th:value="${language}"></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label>Nauczyciel:</label></td>
+            <td>
+                <select id="teacherSelect" name="teacher">
+                    <option value="" disabled selected>wybierz nauczyciela</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+    <div class="buttons">
+        <button type="submit">Zapisz</button>
+        <button type="reset">Wyczyść</button>
+    </div>
+</form>
+</body>
+</html>
+
+<script type="text/javascript">
+
+    function populateTeachers(lSelectId, tSelectId) {
+        let lSelect = document.getElementById(lSelectId);
+        let tSelect = document.getElementById(tSelectId);
+        let url = "/teachers?language=" + lSelect.value;
+        $.getJSON(url, function (data) {
+            tSelect.innerHTML = '<option value="" disabled selected>wybierz nauczyciela</option>';
+            data.forEach(teacher => {
+                let option = '<option value="' + teacher.id + '">' + teacher.firstName + ' ' + teacher.lastName + '</option>';
+                tSelect.innerHTML += option;
+            })
+        });
+    }
+
+</script>

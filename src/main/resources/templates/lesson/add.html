@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodawanie lekcji</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<style>
+    .buttons {
+        height: 20px;
+        width: 250px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+<body>
+<h1>Dodawanie lekcji</h1>
+<h2><a th:href="@{/lessons/list}">Lista lekcji</a></h2>
+<form th:action="@{/lessons/add}" method="post" th:object="${lesson}">
+    <table>
+        <tr>
+            <td><label>Nauczyciel:</label></td>
+            <td>
+                <select id="teacherSelect" name="teacher" onchange="populateStudents('studentSelect',this.id)">
+                    <option value="" disabled selected>wybierz nauczyciela</option>
+                    <option th:each="teacher : ${teachers}" th:text="${teacher}" th:value="${teacher.id}"></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label>Student:</label></td>
+            <td>
+                <select id="studentSelect" name="student">
+                    <option value="" disabled selected>wybierz studenta</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label>Termin:</label></td>
+            <td><input id="date" onchange="checkTerm(this.id,'teacherSelect')" type="datetime-local" th:field="*{term}"
+                       placeholder="Termin"/></td>
+        </tr>
+    </table>
+    <div class="buttons">
+        <button id="updateButton" type="submit">Zapisz</button>
+        <button type="reset">Wyczyść</button>
+    </div>
+</form>
+</body>
+</html>
+
+
+<script type="text/javascript">
+
+    function populateStudents(sSelectId, tSelectId) {
+        let sSelect = document.getElementById(sSelectId);
+        let tSelect = document.getElementById(tSelectId);
+        let url = "/students?teacherId=" + tSelect.value;
+        $.getJSON(url, function (data) {
+            sSelect.innerHTML = '<option value="" disabled selected>wybierz studenta</option>';
+            data.forEach(student => {
+                let option = '<option value="' + student.id + '">' + student.firstName + ' ' + student.lastName + '</option>';
+                sSelect.innerHTML += option;
+            })
+        });
+    }
+
+    function checkTerm(dInputId,tSelectId) {
+        let dInput = document.getElementById(dInputId);
+        let tSelect = document.getElementById(tSelectId);
+        let uButton = document.getElementById('updateButton');
+        let url = "/lessons?term=" + dInput.value + "&teacherId=" + tSelect.value;
+        $.getJSON(url, function (data) {
+            if (data === false) {
+                dInput.value = "";
+                uButton.disabled = true;
+            }else{
+                uButton.disabled = false;
+            }
+        });
+    }
+
+</script>
+

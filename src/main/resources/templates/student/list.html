@@ -1,19 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Studenci</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
+<style>
+    .buttons {
+        width: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
 <body>
 <h1>Studenci</h1>
-
+<h2><a th:href="@{/lessons/list}">Lista lekcji</a></h2>
+<h2><a th:href="@{/teachers/list}">Lista nauczycieli</a></h2>
+<h2><a th:href="@{/students/add}">Dodaj studenta</a></h2>
 <table>
     <thead>
     <tr>
-        <th> ID </th>
-        <th> Imię </th>
-        <th> Nazwisko </th>
-        <th> Język </th>
+        <th> ID</th>
+        <th> Imię</th>
+        <th> Nazwisko</th>
+        <th> Język</th>
+        <th> Akcja</th>
     </tr>
     </thead>
     <tbody>
@@ -22,8 +34,33 @@
         <td th:text="${student.firstName}"></td>
         <td th:text="${student.lastName}"></td>
         <td th:text="${student.language}"></td>
+        <td>
+            <div class="buttons">
+                <button th:id="${student.id}" onclick="deleteStudent(this.id)" th:text="Usuń"/>
+                <form th:action="@{/students/edit/{id}(id=${student.id})}" method="get">
+                    <button type="submit" th:text="Edytuj"></button>
+                </form>
+            </div>
+        </td>
     </tr>
     </tbody>
 </table>
 </body>
 </html>
+
+<script type="text/javascript">
+    function deleteStudent(studentId) {
+        let url = "/students/delete/" + studentId;
+        $.ajax({
+            url: url,
+            type: 'DELETE',
+            success: function () {
+                window.location.href = "/students/list";
+            },
+            error: function () {
+                alert("Wystąpił błąd");
+            }
+        });
+    }
+
+</script>

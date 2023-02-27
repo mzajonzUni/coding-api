@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Dodawanie nauczyciela</title>
+</head>
+<style>
+  .buttons{
+    height: 20px;
+    width: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+<body>
+<h1>Dodawanie nauczyciela</h1>
+<h2><a th:href="@{/teachers/list}">Lista nauczyciela</a></h2>
+<form th:action="@{/teachers/add}" method="post" th:object="${teacher}">
+
+  <table>
+    <tr>
+      <td><label>Imię:</label></td>
+      <td><input type="text" th:field="*{firstName}" placeholder="Imię"/></td>
+    </tr>
+    <tr>
+      <td><label>Nazwisko:</label></td>
+      <td><input type="text" th:field="*{lastName}" placeholder="Nazwisko"/></td>
+    </tr>
+    <tr>
+      <td><label>Języki:</label></td>
+      <td>
+      <select name="languages" multiple>
+          <option th:each="language : ${languages}" th:text="${language}" th:value="${language}"></option>
+      </select>
+      </td>
+    </tr>
+  </table>
+  <div class="buttons">
+    <button type="submit" >Zapisz</button>
+    <button type="reset">Wyczyść</button>
+  </div>
+</form>
+</body>
+</html>

@@ -1,8 +1,9 @@
-package pl.zajonz.coding.student.model;
+package pl.zajonz.coding.student.model.dto;
 
 import lombok.Builder;
 import lombok.Getter;
 import pl.zajonz.coding.common.Language;
+import pl.zajonz.coding.student.model.Student;
 
 @Getter
 @Builder

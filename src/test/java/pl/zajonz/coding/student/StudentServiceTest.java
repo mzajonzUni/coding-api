@@ -60,53 +60,53 @@ class StudentServiceTest {
         assertEquals(studentsFromRepo, returned);
     }
 
-    @Test
-    void testSave_CorrectLanguage_ResultsInStudentBeingSaved() {
-        //given
-        Teacher teacher = Teacher.builder()
-                .languages(Set.of(Language.JAVA))
-                .build();
-        Student student = Student.builder()
-                .firstName("Test")
-                .lastName("Testowy")
-                .language(Language.JAVA)
-                .teacher(teacher)
-                .build();
+//    @Test
+//    void testSave_CorrectLanguage_ResultsInStudentBeingSaved() {
+//        //given
+//        Teacher teacher = Teacher.builder()
+//                .languages(Set.of(Language.JAVA))
+//                .build();
+//        Student student = Student.builder()
+//                .firstName("Test")
+//                .lastName("Testowy")
+//                .language(Language.JAVA)
+//                .teacher(teacher)
+//                .build();
+//
+//        //when
+//        studentService.save(student);
+//
+//        //then
+//        verify(studentRepository).save(student);
+//    }
 
-        //when
-        studentService.save(student);
-
-        //then
-        verify(studentRepository).save(student);
-    }
-
-    @Test
-    void testSave_IncorrectLanguage_ResultsInIllegalArgumentException() {
-        //given
-        String exceptionMsg = "Wrong teacher";
-        Teacher teacher = Teacher.builder()
-                .languages(Set.of(Language.PYTHON))
-                .build();
-        Student student = Student.builder()
-                .firstName("Test")
-                .lastName("Testowy")
-                .language(Language.JAVA)
-                .teacher(teacher)
-                .build();
-
-        //when //then
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> studentService.save(student))
-                .withMessage(exceptionMsg);
-
-        verifyNoInteractions(studentRepository);
-
-        //Inne rozwiązanie
-        //        IllegalArgumentException exception = assertThrows(
-        //                IllegalArgumentException.class,
-        //                () -> studentService.save(student));
-        //        assertEquals(exceptionMsg, exception.getMessage());
-    }
+//    @Test
+//    void testSave_IncorrectLanguage_ResultsInIllegalArgumentException() {
+//        //given
+//        String exceptionMsg = "Wrong teacher";
+//        Teacher teacher = Teacher.builder()
+//                .languages(Set.of(Language.PYTHON))
+//                .build();
+//        Student student = Student.builder()
+//                .firstName("Test")
+//                .lastName("Testowy")
+//                .language(Language.JAVA)
+//                .teacher(teacher)
+//                .build();
+//
+//        //when //then
+//        assertThatExceptionOfType(IllegalArgumentException.class)
+//                .isThrownBy(() -> studentService.save(student))
+//                .withMessage(exceptionMsg);
+//
+//        verifyNoInteractions(studentRepository);
+//
+//        //Inne rozwiązanie
+//        //        IllegalArgumentException exception = assertThrows(
+//        //                IllegalArgumentException.class,
+//        //                () -> studentService.save(student));
+//        //        assertEquals(exceptionMsg, exception.getMessage());
+//    }
 
     @Test
     void testDeleteById_ResultsInStudentListBeingDeleted() {

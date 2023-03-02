@@ -2,13 +2,13 @@ package pl.zajonz.coding.teacher;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
 import pl.zajonz.coding.teacher.model.command.CreateTeacherCommand;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherCommand;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherLanguageCommand;
 import pl.zajonz.coding.teacher.model.dto.TeacherDto;
-
 import java.util.List;
 
 @RestController
@@ -21,6 +21,13 @@ public class TeacherController {
     @GetMapping
     public List<TeacherDto> findAll() {
         return teacherService.findAllByDeletedFalse().stream()
+                .map(TeacherDto::fromEntity)
+                .toList();
+    }
+
+    @GetMapping(params = "language")
+    public List<TeacherDto> findAllByLanguage(@RequestParam Language language) {
+        return teacherService.findAllByLanguagesContainingAndDeletedFalse(language).stream()
                 .map(TeacherDto::fromEntity)
                 .toList();
     }
@@ -41,17 +48,19 @@ public class TeacherController {
     // TODO: 27.02.2023 update
     // TODO: 27.02.2023 partial update - updateLanguages
 
-
-
-    @DeleteMapping("/delete/{id}")
-    public void deleteTeacher(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable int id) {
         teacherService.deleteById(id);
     }
 
-    @GetMapping(params = "language")
-    public List<TeacherDto> findAllByLanguage(@RequestParam Language language) {
-        return teacherService.findAllByLanguagesContainingAndDeletedFalse(language).stream()
-                .map(TeacherDto::fromEntity)
-                .toList();
+    @PutMapping("/{id}")
+    public TeacherDto update(@PathVariable int id, @RequestBody UpdateTeacherCommand command) {
+        return teacherService.update(command, id);
+    }
+
+    @PatchMapping("/{id}/languages")
+    public TeacherDto updateLanguages(@PathVariable int id, @RequestBody UpdateTeacherLanguageCommand command) {
+        return teacherService.updateLanguages(command, id);
     }
 }

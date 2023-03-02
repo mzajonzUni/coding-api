@@ -1,5 +1,6 @@
 package pl.zajonz.coding.teacher;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class TeacherController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TeacherDto submitTeacher(@RequestBody CreateTeacherCommand command) {
+    public TeacherDto submitTeacher(@RequestBody @Valid CreateTeacherCommand command) {
         Teacher toSave = command.toEntity();
         return TeacherDto.fromEntity(teacherService.save(toSave));
     }

@@ -25,10 +25,12 @@ public class LessonController {
                 .toList();
     }
 
-    @PostMapping()
+    @PostMapping
     public LessonDto create(@RequestBody CreateLessonCommand command) {
         return LessonDto.fromEntity(lessonService.save(command));
     }
+
+    // TODO: 02.03.2023 dokończyć funkcjonalności - zamiana na rest
 
     @DeleteMapping("/delete/{id}")
     @ResponseBody

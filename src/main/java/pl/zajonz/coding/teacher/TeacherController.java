@@ -59,7 +59,7 @@ public class TeacherController {
         return teacherService.update(command, id);
     }
 
-    @PatchMapping("/{id}/languages")
+    @PatchMapping("/{id}")
     public TeacherDto updateLanguages(@PathVariable int id, @RequestBody UpdateTeacherLanguageCommand command) {
         return teacherService.updateLanguages(command, id);
     }

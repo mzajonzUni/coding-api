@@ -28,7 +28,8 @@ public class StudentController {
         return StudentDto.fromEntity(studentService.findById(id));
     }
 
-    @PostMapping()
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public StudentDto create(@RequestBody CreateStudentCommand command) {
         return StudentDto.fromEntity(studentService.save(command));
     }

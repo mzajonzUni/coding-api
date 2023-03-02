@@ -1,9 +1,8 @@
-package pl.zajonz.coding.lesson.model;
+package pl.zajonz.coding.lesson.model.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import pl.zajonz.coding.student.model.Student;
-import pl.zajonz.coding.student.model.StudentDto;
+import pl.zajonz.coding.lesson.model.Lesson;
 
 import java.time.LocalDateTime;
 

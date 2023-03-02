@@ -17,7 +17,7 @@ import java.util.Set;
 @Setter
 @Builder
 @Entity
-@SQLDelete(sql = "UPDATE coding_db.student SET deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE student SET deleted = true WHERE id=?")
 public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

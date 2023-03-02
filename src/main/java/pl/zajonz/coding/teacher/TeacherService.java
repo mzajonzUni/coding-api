@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherCommand;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherLanguageCommand;
+import pl.zajonz.coding.teacher.model.dto.TeacherDto;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -35,5 +38,21 @@ public class TeacherService {
         return teacherRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(MessageFormat
                         .format("Teacher with id={0} has not been found", id)));
+    }
+
+    public TeacherDto update(UpdateTeacherCommand command, int id) {
+        Teacher teacher = findById(id);
+        teacher.setFirstName(command.getFirstName());
+        teacher.setLastName(command.getLastName());
+        teacher.setLanguages(command.getLanguages());
+        teacherRepository.save(teacher);
+        return TeacherDto.fromEntity(teacher);
+    }
+
+    public TeacherDto updateLanguages(UpdateTeacherLanguageCommand command, int id) {
+        Teacher teacher = findById(id);
+        teacher.setLanguages(command.getLanguages());
+        teacherRepository.save(teacher);
+        return TeacherDto.fromEntity(teacher);
     }
 }

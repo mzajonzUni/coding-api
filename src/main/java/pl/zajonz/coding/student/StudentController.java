@@ -1,62 +1,47 @@
 package pl.zajonz.coding.student;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import pl.zajonz.coding.common.Language;
-import pl.zajonz.coding.student.model.Student;
-import pl.zajonz.coding.student.model.StudentDto;
+import pl.zajonz.coding.student.model.command.CreateStudentCommand;
+import pl.zajonz.coding.student.model.command.UpdateStudentCommand;
+import pl.zajonz.coding.student.model.dto.StudentDto;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
-@RequestMapping("/students")
+@RequestMapping("/api/v1/students")
 public class StudentController {
 
     private final StudentService studentService;
 
-    @GetMapping("/list")
-    public String getStudentList(Model model) {
-        model.addAttribute("students", studentService.findAllByDeletedFalse());
-        return "student/list";
-    }
-
-    @GetMapping("/add")
-    public String showForm(Model model) {
-        model.addAttribute("student",new Student());
-        model.addAttribute("languages", Language.values());
-        return "student/add";
-    }
-    @PostMapping("/add")
-    public String submitStudent(Student student) {
-        studentService.save(student);
-        return "redirect:/students/list";
-    }
-    @DeleteMapping("/delete/{id}")
-    @ResponseBody
-    public void deleteStudent(@PathVariable Integer id) {
-        studentService.deleteById(id);
-    }
-
-    @GetMapping("/edit/{id}")
-    public String showStudentEditor(@PathVariable Integer id, Model model) {
-        model.addAttribute("student", studentService.findById(id));
-        return "/student/edit";
-    }
-
-    @PatchMapping("/edit")
-    @ResponseBody
-    public void editStudent(@RequestParam Integer teacherId, @RequestParam Integer studentId) {
-        studentService.updateStudent(teacherId,studentId);
-    }
-
     @GetMapping
-    @ResponseBody
-    public List<StudentDto> findAllByTeacher_IdAndDeletedFalse(@RequestParam int teacherId){
-        return studentService.findAllByTeacher_IdAndDeletedFalse(teacherId)
-                .stream()
-                .map(StudentDto::fromEntity).toList();
+    public List<StudentDto> findAll() {
+        return studentService.findAllByDeletedFalse().stream()
+                .map(StudentDto::fromEntity)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    public StudentDto findById(@PathVariable int id) {
+        return StudentDto.fromEntity(studentService.findById(id));
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public StudentDto create(@RequestBody CreateStudentCommand command) {
+        return StudentDto.fromEntity(studentService.save(command));
+    }
+
+    @PutMapping("/{id}")
+    public StudentDto update(@PathVariable int id, @RequestBody UpdateStudentCommand command) {
+        return studentService.update(command, id);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable int id) {
+        studentService.deleteById(id);
     }
 }

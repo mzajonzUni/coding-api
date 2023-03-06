@@ -2,15 +2,13 @@ package pl.zajonz.coding.lesson;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pl.zajonz.coding.lesson.model.Lesson;
 import pl.zajonz.coding.lesson.model.command.CreateLessonCommand;
-import pl.zajonz.coding.lesson.model.command.UpdateLessonCommand;
+import pl.zajonz.coding.lesson.model.command.UpdateLessonTermCommand;
 import pl.zajonz.coding.lesson.model.dto.LessonDto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -46,17 +44,11 @@ public class LessonController {
         lessonService.deleteById(id);
     }
 
-    @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public LessonDto update(@PathVariable Integer id, @RequestBody @Valid UpdateLessonCommand command) {
-        return LessonDto.fromEntity(lessonService.update(id, command));
-    }
-
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public LessonDto updateDate(
-            @PathVariable Integer id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime term) {
-        return LessonDto.fromEntity(lessonService.updateLesson(term, id));
+    public LessonDto updateTerm(@PathVariable Integer id, @RequestBody @Valid UpdateLessonTermCommand command) {
+        Lesson toUpdate = command.toEntity();
+        return LessonDto.fromEntity(lessonService.updateTerm(id, toUpdate));
     }
+
 }

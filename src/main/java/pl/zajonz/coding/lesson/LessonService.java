@@ -3,10 +3,9 @@ package pl.zajonz.coding.lesson;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import pl.zajonz.coding.common.InvalidDateException;
+import pl.zajonz.coding.common.exception.InvalidDateException;
 import pl.zajonz.coding.lesson.model.Lesson;
 import pl.zajonz.coding.lesson.model.command.CreateLessonCommand;
-import pl.zajonz.coding.lesson.model.command.UpdateLessonCommand;
 import pl.zajonz.coding.student.StudentRepository;
 import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.teacher.TeacherRepository;
@@ -64,14 +63,14 @@ public class LessonService {
         lessonRepository.deleteById(id);
     }
 
-    public Lesson updateLesson(LocalDateTime date, int lessonId) {
+    public Lesson updateTerm(int lessonId, Lesson lesson) {
         Lesson editLesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new EntityNotFoundException(MessageFormat
                         .format("Lesson with id={0} has not been found", lessonId)));
-        if (!checkDate(date, editLesson.getTeacher().getId())) {
-            throw new InvalidDateException("Invalid date " + date);
+        if (!checkDate(lesson.getTerm(), editLesson.getTeacher().getId())) {
+            throw new InvalidDateException("Invalid date " + lesson.getTerm());
         }
-        editLesson.setTerm(date);
+        editLesson.setTerm(lesson.getTerm());
         return lessonRepository.save(editLesson);
     }
 
@@ -84,24 +83,5 @@ public class LessonService {
         return !date.isBefore(LocalDateTime.now()) &&
                 !lessonRepository.existsByTeacherIdAndTermBetween(
                         teacherId, date.minusMinutes(59), date.plusMinutes(59));
-    }
-
-    public Lesson update(Integer id, UpdateLessonCommand command) {
-        Lesson lessonToUpdate = lessonRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
-                        .format("Lesson with id={0} has not been found", id)));
-        Teacher teacher = teacherRepository.findById(command.getTeacherId())
-                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
-                        .format("Teacher with id={0} has not been found", command.getTeacherId())));
-        Student student = studentRepository.findById(command.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
-                        .format("Student with id={0} has not been found", command.getTeacherId())));
-        if (!checkDate(command.getTerm(), teacher.getId())) {
-            throw new InvalidDateException("Invalid date " + command.getTerm());
-        }
-        lessonToUpdate.setTeacher(teacher);
-        lessonToUpdate.setStudent(student);
-        lessonToUpdate.setTerm(command.getTerm());
-        return lessonRepository.save(lessonToUpdate);
     }
 }

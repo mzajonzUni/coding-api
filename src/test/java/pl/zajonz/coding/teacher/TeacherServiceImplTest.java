@@ -16,10 +16,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class) //zaprzęga do pracy Mockito (@Mock oraz @InjectMocks)
-class TeacherServiceTest {
+class TeacherServiceImplTest {
 
     @InjectMocks
-    private TeacherService teacherService;
+    private TeacherServiceImpl teacherServiceImpl;
 
     @Mock
     private TeacherRepository teacherRepository;
@@ -43,7 +43,7 @@ class TeacherServiceTest {
         when(teacherRepository.findAllByDeletedFalse()).thenReturn(teachersFromRepo);
 
         //when
-        List<Teacher> returned = teacherService.findAllByDeletedFalse();
+        List<Teacher> returned = teacherServiceImpl.findAllByDeletedFalse();
 
         //then
         assertEquals(teachersFromRepo, returned);
@@ -58,7 +58,7 @@ class TeacherServiceTest {
                 .build();
 
         //when
-        teacherService.save(teacher);
+        teacherServiceImpl.save(teacher);
 
         //then
         verify(teacherRepository).save(teacher);
@@ -77,7 +77,7 @@ class TeacherServiceTest {
         when(teacherRepository.findAllByLanguagesContainingAndDeletedFalse(language)).thenReturn(teachersFromRepo);
 
         //when
-        List<Teacher> returned = teacherService.findAllByLanguagesContainingAndDeletedFalse(language);
+        List<Teacher> returned = teacherServiceImpl.findAllByLanguagesContainingAndDeletedFalse(language);
 
         //then
         assertEquals(teachersFromRepo, returned);
@@ -89,7 +89,7 @@ class TeacherServiceTest {
         int teacherId = 1;
 
         //when
-        teacherService.deleteById(teacherId);
+        teacherServiceImpl.deleteById(teacherId);
 
         //then
         verify(teacherRepository).deleteById(teacherId);

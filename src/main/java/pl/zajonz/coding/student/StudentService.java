@@ -3,9 +3,9 @@ package pl.zajonz.coding.student;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.student.model.command.CreateStudentCommand;
 import pl.zajonz.coding.student.model.command.UpdateStudentCommand;
-import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.student.model.dto.StudentDto;
 import pl.zajonz.coding.teacher.TeacherRepository;
 import pl.zajonz.coding.teacher.model.Teacher;
@@ -30,7 +30,7 @@ public class StudentService {
         toSave.setTeacher(findTeacherId(command.getTeacherId()));
 
         if (!toSave.getTeacher().getLanguages().contains(toSave.getLanguage())){
-            throw new IllegalArgumentException("Wrong teacher");
+            throw new IllegalArgumentException("Wrong teacher " + toSave.getTeacher().getId());
         }
 
         return studentRepository.save(toSave);
@@ -44,18 +44,13 @@ public class StudentService {
         return studentRepository.findAllByTeacher_IdAndDeletedFalse(id);
     }
 
-    public Student findById(Integer id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("No such student with Id " + id));
-    }
-
     public void updateStudent(Integer teacherId, Integer studentId) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new NoSuchElementException("No such student with Id " + studentId));
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new NoSuchElementException("No such teacher with Id " + teacherId));
         if (!teacher.getLanguages().contains(student.getLanguage())){
-            throw new IllegalArgumentException("Wrong teacher");
+            throw new IllegalArgumentException("Wrong teacher " + teacher.getId());
         }
         student.setTeacher(teacher);
         studentRepository.save(student);

@@ -2,6 +2,7 @@ package pl.zajonz.coding.teacher;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pl.zajonz.coding.common.Language;
@@ -56,12 +57,12 @@ public class TeacherController {
     }
 
     @PutMapping("/{id}")
-    public TeacherDto update(@PathVariable int id, @RequestBody UpdateTeacherCommand command) {
+    public TeacherDto update(@PathVariable int id, @RequestBody @Valid UpdateTeacherCommand command) {
         return teacherService.update(command, id);
     }
 
     @PatchMapping("/{id}")
-    public TeacherDto updateLanguages(@PathVariable int id, @RequestBody UpdateTeacherLanguageCommand command) {
+    public TeacherDto updateLanguages(@PathVariable int id, @RequestBody @Valid UpdateTeacherLanguageCommand command) {
         return teacherService.updateLanguages(command, id);
     }
 }

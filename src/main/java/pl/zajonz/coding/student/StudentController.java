@@ -1,5 +1,6 @@
 package pl.zajonz.coding.student;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -30,12 +31,12 @@ public class StudentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public StudentDto create(@RequestBody CreateStudentCommand command) {
+    public StudentDto create(@RequestBody @Valid CreateStudentCommand command) {
         return StudentDto.fromEntity(studentService.save(command));
     }
 
     @PutMapping("/{id}")
-    public StudentDto update(@PathVariable int id, @RequestBody UpdateStudentCommand command) {
+    public StudentDto update(@PathVariable int id, @RequestBody @Valid UpdateStudentCommand command) {
         return studentService.update(command, id);
     }
 

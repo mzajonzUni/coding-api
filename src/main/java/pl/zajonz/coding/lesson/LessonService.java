@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import pl.zajonz.coding.common.InvalidDateException;
 import pl.zajonz.coding.lesson.model.Lesson;
 import pl.zajonz.coding.lesson.model.command.CreateLessonCommand;
+import pl.zajonz.coding.lesson.model.command.UpdateLessonCommand;
 import pl.zajonz.coding.student.StudentRepository;
 import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.teacher.TeacherRepository;
@@ -32,10 +33,12 @@ public class LessonService {
 
     public Lesson save(CreateLessonCommand command) {
         Lesson toSave = command.toEntity();
+        if (!checkDate(toSave.getTerm(), command.getTeacherId())) {
+            throw new InvalidDateException("Invalid date " + toSave.getTerm());
+        }
         toSave.setTeacher(findTeacherId(command.getTeacherId()));
-        toSave.setStudent(findStudentId(command.getTeacherId()));
-        lessonRepository.save(toSave);
-        return toSave;
+        toSave.setStudent(findStudentId(command.getStudentId()));
+        return lessonRepository.save(toSave);
     }
 
     public Teacher findTeacherId(int id) {
@@ -52,7 +55,8 @@ public class LessonService {
 
     public void deleteById(int id) {
         LocalDateTime date = lessonRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("No such lesson with Id" + id))
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Lesson with id={0} has not been found", id)))
                 .getTerm();
         if (date.isBefore(LocalDateTime.now())) {
             throw new InvalidDateException("The term is in the past");
@@ -60,14 +64,15 @@ public class LessonService {
         lessonRepository.deleteById(id);
     }
 
-    public void updateLesson(LocalDateTime date, int lessonId) {
+    public Lesson updateLesson(LocalDateTime date, int lessonId) {
         Lesson editLesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new NoSuchElementException("No such lesson with Id" + lessonId));
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Lesson with id={0} has not been found", lessonId)));
         if (!checkDate(date, editLesson.getTeacher().getId())) {
             throw new InvalidDateException("Invalid date " + date);
         }
         editLesson.setTerm(date);
-        lessonRepository.save(editLesson);
+        return lessonRepository.save(editLesson);
     }
 
     public Lesson findById(int id) {
@@ -81,4 +86,22 @@ public class LessonService {
                         teacherId, date.minusMinutes(59), date.plusMinutes(59));
     }
 
+    public Lesson update(Integer id, UpdateLessonCommand command) {
+        Lesson lessonToUpdate = lessonRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Lesson with id={0} has not been found", id)));
+        Teacher teacher = teacherRepository.findById(command.getTeacherId())
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Teacher with id={0} has not been found", command.getTeacherId())));
+        Student student = studentRepository.findById(command.getStudentId())
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Student with id={0} has not been found", command.getTeacherId())));
+        if (!checkDate(command.getTerm(), teacher.getId())) {
+            throw new InvalidDateException("Invalid date " + command.getTerm());
+        }
+        lessonToUpdate.setTeacher(teacher);
+        lessonToUpdate.setStudent(student);
+        lessonToUpdate.setTerm(command.getTerm());
+        return lessonRepository.save(lessonToUpdate);
+    }
 }

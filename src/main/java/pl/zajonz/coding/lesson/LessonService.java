@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import pl.zajonz.coding.common.InvalidDateException;
 import pl.zajonz.coding.lesson.model.Lesson;
 import pl.zajonz.coding.lesson.model.command.CreateLessonCommand;
+import pl.zajonz.coding.lesson.model.command.UpdateLessonTermCommand;
 import pl.zajonz.coding.student.StudentRepository;
 import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.teacher.TeacherRepository;
@@ -60,13 +61,13 @@ public class LessonService {
         lessonRepository.deleteById(id);
     }
 
-    public void updateLesson(LocalDateTime date, int lessonId) {
+    public void updateLesson(UpdateLessonTermCommand command, int lessonId) {
         Lesson editLesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new NoSuchElementException("No such lesson with Id" + lessonId));
-        if (!checkDate(date, editLesson.getTeacher().getId())) {
-            throw new InvalidDateException("Invalid date " + date);
+        if (!checkDate(command.getTerm(), editLesson.getTeacher().getId())) {
+            throw new InvalidDateException("Invalid date " + command.getTerm());
         }
-        editLesson.setTerm(date);
+        editLesson.setTerm(command.getTerm());
         lessonRepository.save(editLesson);
     }
 

@@ -45,10 +45,6 @@ public class TeacherController {
         return TeacherDto.fromEntity(teacherService.save(toSave));
     }
 
-    // TODO: 27.02.2023 delete
-    // TODO: 27.02.2023 update
-    // TODO: 27.02.2023 partial update - updateLanguages
-
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable int id) {
@@ -56,12 +52,12 @@ public class TeacherController {
     }
 
     @PutMapping("/{id}")
-    public TeacherDto update(@PathVariable int id, @RequestBody UpdateTeacherCommand command) {
+    public TeacherDto update(@PathVariable int id, @RequestBody @Valid UpdateTeacherCommand command) {
         return teacherService.update(command, id);
     }
 
     @PatchMapping("/{id}")
-    public TeacherDto updateLanguages(@PathVariable int id, @RequestBody UpdateTeacherLanguageCommand command) {
+    public TeacherDto updateLanguages(@PathVariable int id, @RequestBody @Valid UpdateTeacherLanguageCommand command) {
         return teacherService.updateLanguages(command, id);
     }
 }

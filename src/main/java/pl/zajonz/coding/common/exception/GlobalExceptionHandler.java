@@ -14,19 +14,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {EntityNotFoundException.class, EmptyResultDataAccessException.class})
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorMessage handleEntityNotFoundException(EntityNotFoundException ex) {
-        return new ErrorMessage("Entity not found", ex.getMessage());
+        return new ErrorMessage("Entity not found");
     }
 
     @ExceptionHandler(InvalidDateException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorMessage handleInvalidDateException(InvalidDateException ex) {
-        return new ErrorMessage("Invalid date", ex.getMessage());
+        return new ErrorMessage("Invalid date");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorMessage handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-//        return new ErrorMessage("Validation failed", ex.getMessage());
         ValidationErrorMessage error = new ValidationErrorMessage();
         ex.getFieldErrors().forEach(fe -> error.addViolation(fe.getField(), fe.getDefaultMessage()));
         return error;
@@ -35,6 +34,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ErrorMessage handleIllegalArgumentException(IllegalArgumentException ex){
-        return new ErrorMessage("Illegal argument", ex.getMessage());
+        return new ErrorMessage("Illegal argument");
     }
 }

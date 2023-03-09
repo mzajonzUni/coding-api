@@ -37,7 +37,6 @@ public class LessonController {
     }
     // TODO: 02.03.2023 dokończyć funkcjonalności - zamiana na rest
 
-
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLesson(@PathVariable Integer id) {

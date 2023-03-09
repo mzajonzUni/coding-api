@@ -12,7 +12,7 @@ public class ValidationErrorMessage extends ErrorMessage {
     private List<FieldConstraintViolation> violations = new ArrayList<>();
 
     public ValidationErrorMessage() {
-        super("Validation errors", "i tak zostanie zmienione");
+        super("Validation errors");
     }
 
     public void addViolation(String field, String message) {

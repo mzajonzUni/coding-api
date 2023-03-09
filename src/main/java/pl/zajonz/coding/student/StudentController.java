@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.student.model.command.CreateStudentCommand;
 import pl.zajonz.coding.student.model.command.UpdateStudentCommand;
 import pl.zajonz.coding.student.model.dto.StudentDto;
@@ -37,7 +38,8 @@ public class StudentController {
 
     @PutMapping("/{id}")
     public StudentDto update(@PathVariable int id, @RequestBody @Valid UpdateStudentCommand command) {
-        return studentService.update(command, id);
+        Student toUpdate = command.toEntity();
+        return StudentDto.fromEntity(studentService.update(id, toUpdate));
     }
 
     @DeleteMapping("/{id}")

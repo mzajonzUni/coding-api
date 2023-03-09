@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
-import pl.zajonz.coding.teacher.model.command.UpdateTeacherCommand;
 import pl.zajonz.coding.teacher.model.command.UpdateTeacherLanguageCommand;
-import pl.zajonz.coding.teacher.model.dto.TeacherDto;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -46,20 +44,18 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public TeacherDto update(UpdateTeacherCommand command, int id) {
-        Teacher teacher = findById(id);
-        teacher.setFirstName(command.getFirstName());
-        teacher.setLastName(command.getLastName());
-        teacher.setLanguages(command.getLanguages());
-        teacherRepository.save(teacher);
-        return TeacherDto.fromEntity(teacher);
+    public Teacher update(int id, Teacher teacher) {
+        Teacher teacherToUpdate = findById(id);
+        teacherToUpdate.setFirstName(teacher.getFirstName());
+        teacherToUpdate.setLastName(teacher.getLastName());
+        teacherToUpdate.setLanguages(teacher.getLanguages());
+        return teacherRepository.save(teacherToUpdate);
     }
 
     @Override
-    public TeacherDto updateLanguages(UpdateTeacherLanguageCommand command, int id) {
+    public Teacher updateLanguages(UpdateTeacherLanguageCommand command, int id) {
         Teacher teacher = findById(id);
         teacher.setLanguages(command.getLanguages());
-        teacherRepository.save(teacher);
-        return TeacherDto.fromEntity(teacher);
+        return teacherRepository.save(teacher);
     }
 }

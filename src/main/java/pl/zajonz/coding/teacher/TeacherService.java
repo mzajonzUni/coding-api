@@ -25,7 +25,7 @@ public interface TeacherService {
 
     Teacher findById(int id);
 
-    TeacherDto update(UpdateTeacherCommand command, int id);
+    Teacher update(int id, Teacher teacher);
 
-    TeacherDto updateLanguages(UpdateTeacherLanguageCommand command, int id);
+    Teacher updateLanguages(UpdateTeacherLanguageCommand command, int id);
 }

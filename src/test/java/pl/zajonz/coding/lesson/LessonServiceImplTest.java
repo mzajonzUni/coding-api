@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.zajonz.coding.common.exception.InvalidDateException;
 import pl.zajonz.coding.lesson.model.Lesson;
 import pl.zajonz.coding.lesson.model.command.CreateLessonCommand;
-import pl.zajonz.coding.lesson.model.command.UpdateLessonTermCommand;
 import pl.zajonz.coding.student.StudentRepository;
 import pl.zajonz.coding.student.model.Student;
 import pl.zajonz.coding.teacher.TeacherRepository;
@@ -26,14 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class LessonServiceTest {
+class LessonServiceImplTest {
 
     @InjectMocks
-    private LessonService lessonService;
-
+    private LessonServiceImpl lessonServiceImpl;
     @Mock
     private LessonRepository lessonRepository;
-
     @Mock
     private TeacherRepository teacherRepository;
     @Mock
@@ -56,7 +53,7 @@ class LessonServiceTest {
 
         when(lessonRepository.findAllByDeletedFalse()).thenReturn(resultsFromRepo);
         //when
-        List<Lesson> returned = lessonService.findAllByDeletedFalse();
+        List<Lesson> returned = lessonServiceImpl.findAllByDeletedFalse();
 
         //then
         assertEquals(resultsFromRepo, returned);
@@ -65,87 +62,109 @@ class LessonServiceTest {
     @Test
     void testSave_CorrectValues_ResultsInLessonBeingSaved() {
         //given
-        LocalDateTime date = LocalDateTime.now().plusDays(3);
+        LocalDateTime date = LocalDateTime.now().plusDays(10);
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(date);
         Teacher teacher = Teacher.builder()
-                .id(1)
                 .firstName("TestTeacher")
                 .build();
         Student student = Student.builder()
-                .id(1)
                 .firstName("TestStudent")
                 .build();
+        Lesson result = command.toEntity();
+        result.setTeacher(teacher);
+        result.setStudent(student);
+
         Lesson lesson = Lesson.builder()
-                .id(1)
                 .student(student)
                 .teacher(teacher)
                 .term(date)
                 .build();
-        CreateLessonCommand command = new CreateLessonCommand();
-        command.setTeacherId(teacher.getId());
-        command.setStudentId(student.getId());
-        command.setTerm(date);
 
-        when(lessonRepository.existsByTeacherIdAndTermBetween(anyInt(),any(LocalDateTime.class),
-                any(LocalDateTime.class))).thenReturn(false);
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(lesson);
         when(teacherRepository.findById(anyInt())).thenReturn(Optional.of(teacher));
         when(studentRepository.findById(anyInt())).thenReturn(Optional.of(student));
-        //when
-        lessonService.save(command);
 
+        //when
+        Lesson returned = lessonServiceImpl.save(command);
         //then
-        verify(lessonRepository).save(any(Lesson.class));
+        assertEquals(lesson, returned);
     }
 
-//    @Test
-//    void testSave_TermInPast_ResultsInLessonBeingSaved() {
-//        //given
-//        LocalDateTime termBefore = LocalDateTime.now().minusDays(10);
-//        String exceptionMsg = "Invalid date " + termBefore;
-//        Teacher teacher = Teacher.builder()
-//                .firstName("TestTeacher")
-//                .build();
-//        Student student = Student.builder()
-//                .firstName("TestStudent")
-//                .build();
-//        Lesson lesson = Lesson.builder()
-//                .student(student)
-//                .teacher(teacher)
-//                .term(termBefore)
-//                .build();
-//
-//        //when //then
-//        InvalidDateException exception = assertThrows(
-//                InvalidDateException.class,
-//                () -> lessonService.save(lesson));
-//        assertEquals(exceptionMsg, exception.getMessage());
-//    }
+    @Test
+    void testSave_TermInPast_ResultsInInvalidDateException() {
+        //given
+        LocalDateTime termBefore = LocalDateTime.now().minusDays(10);
+        String exceptionMsg = "Invalid date " + termBefore;
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(termBefore);
 
-//    @Test
-//    void testSave_TermOccupied_ResultsInInvalidDateException() {
-//        //given
-//        LocalDateTime termOccupied = LocalDateTime.now().plusDays(10);
-//        String exceptionMsg = "Invalid date " + termOccupied;
-//        Teacher teacher = Teacher.builder()
-//                .firstName("TestTeacher")
-//                .build();
-//        Student student = Student.builder()
-//                .firstName("TestStudent")
-//                .build();
-//        Lesson lesson = Lesson.builder()
-//                .student(student)
-//                .teacher(teacher)
-//                .term(termOccupied)
-//                .build();
-//
-//        when(lessonRepository.existsByTeacherIdAndTermBetween(
-//                teacher.getId(), lesson.getTerm().minusMinutes(59),
-//                lesson.getTerm().plusMinutes(59))).thenReturn(true);
-//        //when //then
-//        InvalidDateException exception = assertThrows(
-//                InvalidDateException.class,
-//                () -> lessonService.save(any()));
-//        assertEquals(exceptionMsg, exception.getMessage());
-//    }
+        //when //then
+        InvalidDateException exception = assertThrows(
+                InvalidDateException.class,
+                () -> lessonServiceImpl.save(command));
+        assertEquals(exceptionMsg, exception.getMessage());
+    }
+
+    @Test
+    void testSave_TermOccupied_ResultsInInvalidDateException() {
+        //given
+        LocalDateTime termOccupied = LocalDateTime.now().plusDays(10);
+        String exceptionMsg = "Invalid date " + termOccupied;
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(termOccupied);
+
+        when(lessonRepository.existsByTeacherIdAndTermBetween(
+                anyInt(), any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(true);
+        //when //then
+        InvalidDateException exception = assertThrows(
+                InvalidDateException.class,
+                () -> lessonServiceImpl.save(command));
+        assertEquals(exceptionMsg, exception.getMessage());
+    }
+
+    @Test
+    void testSave_IncorrectTeacher_ResultsInEntityNotFoundException(){
+        LocalDateTime date = LocalDateTime.now().plusDays(10);
+        String exceptionMsg = "Teacher with id=1 has not been found";
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(date);
+
+        when(teacherRepository.findById(anyInt())).thenReturn(Optional.empty());
+
+        //when //then
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                ()-> lessonServiceImpl.save(command));
+        assertEquals(exceptionMsg,exception.getMessage());
+    }
+    @Test
+    void testSave_IncorrectStudent_ResultsInEntityNotFoundException(){
+        LocalDateTime date = LocalDateTime.now().plusDays(10);
+        String exceptionMsg = "Student with id=1 has not been found";
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(date);
+        Teacher teacher = Teacher.builder()
+                .firstName("TestTeacher")
+                .build();
+
+        when(teacherRepository.findById(anyInt())).thenReturn(Optional.of(teacher));
+        when(studentRepository.findById(anyInt())).thenReturn(Optional.empty());
+
+        //when //then
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                ()-> lessonServiceImpl.save(command));
+        assertEquals(exceptionMsg,exception.getMessage());
+    }
 
     @Test
     void testDeleteById_CorrectId_ResultsInLessonBeingDeleted() {
@@ -162,9 +181,9 @@ class LessonServiceTest {
                 .teacher(teacher)
                 .term(LocalDateTime.now().plusDays(10))
                 .build();
-        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.findById(anyInt())).thenReturn(Optional.of(lesson));
         //when
-        lessonService.deleteById(lessonId);
+        lessonServiceImpl.deleteById(lessonId);
         //then
         verify(lessonRepository).deleteById(lessonId);
     }
@@ -180,7 +199,7 @@ class LessonServiceTest {
         //when  //then
         EntityNotFoundException exception = assertThrows(
                 EntityNotFoundException.class,
-                () -> lessonService.deleteById(lessonId));
+                () -> lessonServiceImpl.deleteById(lessonId));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
@@ -204,40 +223,38 @@ class LessonServiceTest {
         //when  //then
         InvalidDateException exception = assertThrows(
                 InvalidDateException.class,
-                () -> lessonService.deleteById(lessonId));
+                () -> lessonServiceImpl.deleteById(lessonId));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
     @Test
-    void testUpdateLesson_CorrectValues_ResultsInLessonBeingUpdated() {
+    void testUpdateTerm_CorrectValues_ResultsInLessonBeingUpdated() {
         //given
         int lessonId = 1;
-        LocalDateTime date = LocalDateTime.now().plusDays(10);
-        LocalDateTime newDate = LocalDateTime.now().plusDays(8);
         Teacher teacher = Teacher.builder()
                 .firstName("TestTeacher")
                 .build();
-        Student student = Student.builder()
-                .firstName("TestStudent")
+        Lesson lessonToUpdate = Lesson.builder()
+                .teacher(teacher)
+                .term(LocalDateTime.now().plusDays(10))
                 .build();
         Lesson lesson = Lesson.builder()
-                .student(student)
-                .teacher(teacher)
-                .term(date)
+                .term(LocalDateTime.now().plusDays(8))
                 .build();
-        Lesson lessonToUpdate = Lesson.builder()
-                .term(newDate)
-                .build();
-        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+
+        when(lessonRepository.findById(anyInt())).thenReturn(Optional.of(lessonToUpdate));
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(lessonToUpdate);
+
         //when
-        lessonService.updateTerm(lessonId, lessonToUpdate);
+        Lesson returned = lessonServiceImpl.updateTerm(lessonId, lesson);
+
         //then
-        assertEquals(newDate, lesson.getTerm());
-        verify(lessonRepository).save(lesson);
+        assertEquals(lesson.getTerm(), returned.getTerm());
+        verify(lessonRepository).save(lessonToUpdate);
     }
 
     @Test
-    void testUpdateLesson_InCorrectLessonId_ResultsInNoSuchElementException() {
+    void testUpdateTerm_IncorrectLesson_ResultsInEntityNotFoundException() {
         //given
         int lessonId = 1;
         LocalDateTime date = LocalDateTime.now().plusDays(10);
@@ -251,12 +268,12 @@ class LessonServiceTest {
         //when //then
         EntityNotFoundException exception = assertThrows(
                 EntityNotFoundException.class,
-                () -> lessonService.updateTerm(lessonId, lessonToUpdate));
+                () -> lessonServiceImpl.updateTerm(lessonId, lessonToUpdate));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
     @Test
-    void testUpdateLesson_TermInPast_ResultsInInvalidDateException() {
+    void testUpdateTerm_TermInPast_ResultsInInvalidDateException() {
         //given
         int lessonId = 1;
         LocalDateTime date = LocalDateTime.now().minusDays(10);
@@ -267,11 +284,7 @@ class LessonServiceTest {
         Teacher teacher = Teacher.builder()
                 .firstName("TestTeacher")
                 .build();
-        Student student = Student.builder()
-                .firstName("TestStudent")
-                .build();
         Lesson lesson = Lesson.builder()
-                .student(student)
                 .teacher(teacher)
                 .term(date)
                 .build();
@@ -279,7 +292,7 @@ class LessonServiceTest {
         //when //then
         InvalidDateException exception = assertThrows(
                 InvalidDateException.class,
-                () -> lessonService.updateTerm(lessonId, lessonToUpdate));
+                () -> lessonServiceImpl.updateTerm(lessonId, lessonToUpdate));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
@@ -295,22 +308,17 @@ class LessonServiceTest {
         Teacher teacher = Teacher.builder()
                 .firstName("TestTeacher")
                 .build();
-        Student student = Student.builder()
-                .firstName("TestStudent")
-                .build();
         Lesson lesson = Lesson.builder()
-                .student(student)
                 .teacher(teacher)
                 .term(dateOccupied)
                 .build();
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(lessonRepository.existsByTeacherIdAndTermBetween(
-                teacher.getId(), lesson.getTerm().minusMinutes(59),
-                lesson.getTerm().plusMinutes(59))).thenReturn(true);
+                anyInt(), any(LocalDateTime.class),any(LocalDateTime.class))).thenReturn(true);
         //when //then
         InvalidDateException exception = assertThrows(
                 InvalidDateException.class,
-                () -> lessonService.updateTerm(lessonId, lessonToUpdate));
+                () -> lessonServiceImpl.updateTerm(lessonId, lessonToUpdate));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
@@ -330,7 +338,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
 
         //then
-        Lesson returned = lessonService.findById(lessonId);
+        Lesson returned = lessonServiceImpl.findById(lessonId);
 
         //when
         assertEquals(lesson, returned);
@@ -345,7 +353,7 @@ class LessonServiceTest {
         //then //when
         NoSuchElementException exception = assertThrows(
                 NoSuchElementException.class,
-                () -> lessonService.findById(lessonId));
+                () -> lessonServiceImpl.findById(lessonId));
         assertEquals(exceptionMsg, exception.getMessage());
     }
 
@@ -358,7 +366,7 @@ class LessonServiceTest {
                 teacherId, date.minusMinutes(59),
                 date.plusMinutes(59))).thenReturn(false);
         //when
-        Boolean returned = lessonService.checkDate(date, teacherId);
+        Boolean returned = lessonServiceImpl.checkDate(date, teacherId);
         //then
         assertEquals(true, returned);
     }
@@ -370,7 +378,7 @@ class LessonServiceTest {
         int teacherId = 1;
 
         //when
-        Boolean returned = lessonService.checkDate(date, teacherId);
+        Boolean returned = lessonServiceImpl.checkDate(date, teacherId);
         //then
         assertEquals(false, returned);
     }
@@ -385,7 +393,7 @@ class LessonServiceTest {
                 teacherId, date.minusMinutes(59),
                 date.plusMinutes(59))).thenReturn(true);
         //when
-        Boolean returned = lessonService.checkDate(date, teacherId);
+        Boolean returned = lessonServiceImpl.checkDate(date, teacherId);
         //then
         assertEquals(false, returned);
     }

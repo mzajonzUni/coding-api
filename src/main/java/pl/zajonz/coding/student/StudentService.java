@@ -9,6 +9,7 @@ import pl.zajonz.coding.teacher.model.Teacher;
 import java.util.List;
 
 public interface StudentService {
+
     List<Student> findAllByDeletedFalse();
 
     Student save(CreateStudentCommand command);

@@ -57,12 +57,14 @@ public class TeacherController {
     }
 
     @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public TeacherDto update(@PathVariable int id, @RequestBody @Valid UpdateTeacherCommand command) {
         Teacher toUpdate = command.toEntity();
         return TeacherDto.fromEntity(teacherService.update(id,toUpdate));
     }
 
     @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public TeacherDto updateLanguages(@PathVariable int id, @RequestBody @Valid UpdateTeacherLanguageCommand command) {
         return TeacherDto.fromEntity(teacherService.updateLanguages(command, id));
     }

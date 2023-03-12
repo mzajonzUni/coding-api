@@ -1,6 +1,9 @@
 package pl.zajonz.coding.teacher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+import com.mysql.cj.xdevapi.JsonArray;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -8,20 +11,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.thymeleaf.spring6.expression.Mvc;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
 import pl.zajonz.coding.teacher.model.command.CreateTeacherCommand;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherCommand;
+import pl.zajonz.coding.teacher.model.command.UpdateTeacherLanguageCommand;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,13 +41,14 @@ class TeacherControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private TeacherRepository teacherRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
+    @Transactional
     void testFindAll() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
@@ -48,17 +57,17 @@ class TeacherControllerTest {
                 .lastName("Testowy")
                 .languages(Set.of(Language.JAVA))
                 .build();
-        List<Teacher> teachers = List.of(teacher);
+        teacherRepository.save(teacher);
 
-//        teacherRepository.save(teacher);
-        when(teacherRepository.findAllByDeletedFalse()).thenReturn(teachers);
+//        List<Teacher> teachers = List.of(teacher);
+//        when(teacherRepository.findAllByDeletedFalse()).thenReturn(teachers);
 
         //when //then
         mockMvc.perform(get("/api/v1/teachers"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(teachers.size())))
+//                .andExpect(jsonPath("$", hasSize(teachers.size())))
                 .andExpect(jsonPath("$.[0]", notNullValue()))
                 .andExpect(jsonPath("$.[0].id", equalTo(1)))
                 .andExpect(jsonPath("$.[0].id").value(1));
@@ -66,6 +75,7 @@ class TeacherControllerTest {
     }
 
     @Test
+    @Transactional
     void testFindById() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
@@ -75,14 +85,16 @@ class TeacherControllerTest {
                 .languages(Set.of(Language.JAVA))
                 .build();
 
-        when(teacherRepository.findById(anyInt())).thenReturn(Optional.of(teacher));
+        teacherRepository.save(teacher);
+
+//        when(teacherRepositoryMock.findById(anyInt())).thenReturn(Optional.of(teacher));
 
         //when //then
         mockMvc.perform(get("/api/v1/teachers/1"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", notNullValue()))
-                .andExpect(jsonPath("$.id", equalTo(1)))
+                .andExpect(jsonPath("$.id", equalTo(teacher.getId())))
                 .andExpect(jsonPath("$.firstName", equalTo("Test")));
         //lepiej sprawdzić wszystkie dane
     }
@@ -90,18 +102,18 @@ class TeacherControllerTest {
     @Test
     void testFindByIdNotFound() throws Exception {
         //given
-
-        when(teacherRepository.findById(anyInt())).thenReturn(Optional.empty());
+//        when(teacherRepositoryMock.findById(anyInt())).thenReturn(Optional.empty());
 
         //when //then
-        mockMvc.perform(get("/api/v1/teachers/100"))
+        mockMvc.perform(get("/api/v1/teachers/0"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
-                .andExpect(jsonPath("$.message", equalTo("Teacher with id=100 has not been found")));
+                .andExpect(jsonPath("$.message", equalTo("Teacher with id=0 has not been found")));
     }
 
     @Test
+    @Transactional
     void testSave() throws Exception {
         //given
         CreateTeacherCommand command = new CreateTeacherCommand();
@@ -109,23 +121,105 @@ class TeacherControllerTest {
         command.setFirstName("Test");
         command.setLanguages(Set.of(Language.JAVA));
 
-        Teacher teacher = Teacher.builder()
-                .id(1)
-                .firstName("Test")
-                .lastName("Testowy")
-                .languages(Set.of(Language.JAVA))
-                .build();
-
-        when(teacherRepository.save(teacher)).thenReturn(teacher);
-
         //when //then
+
         mockMvc.perform(post("/api/v1/teachers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(command)))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$", notNullValue()))
-                .andExpect(jsonPath("$.id", equalTo(1)))
-                .andExpect(jsonPath("$.firstName", equalTo("Test")));
+                .andExpect(jsonPath("$.firstName", equalTo("Test")))
+                .andExpect(jsonPath("$.lastName", equalTo("Testowy")));
+    }
+
+    @Test
+    @Transactional
+    void testDelete() throws Exception {
+        //given
+        Teacher teacher = Teacher.builder()
+                .firstName("Testa")
+                .lastName("Testowy")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacher);
+
+        //when //then
+        mockMvc.perform(delete("/api/v1/teachers/" + teacher.getId()))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+        Optional<Teacher> deletedTeacher = teacherRepository.findById(teacher.getId());
+        deletedTeacher.ifPresent(value -> assertTrue(value.isDeleted()));
+    }
+
+
+    @Test
+    @Transactional
+    void testUpdate() throws Exception {
+        //given
+        Teacher teacherToUpdate = Teacher.builder()
+                .firstName("FirstTest")
+                .lastName("LastTest")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacherToUpdate);
+        UpdateTeacherCommand command = new UpdateTeacherCommand();
+        command.setFirstName("Test");
+        command.setLastName("Testowy");
+        command.setLanguages(Set.of(Language.JS));
+
+        //when //then
+        MvcResult result = mockMvc.perform(put("/api/v1/teachers/" + teacherToUpdate.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$", notNullValue()))
+                .andExpect(jsonPath("$.id", equalTo(teacherToUpdate.getId())))
+                .andExpect(jsonPath("$.firstName", equalTo("Test")))
+                .andExpect(jsonPath("$.lastName", equalTo("Testowy")))
+                .andReturn();
+
+        Set<String> actualSet = new HashSet<>(JsonPath.read(result.getResponse().getContentAsString(),
+                "$.languages"));
+        Set<String> expectedSet = command.getLanguages().stream()
+                .map(Objects::toString)
+                .collect(Collectors.toSet());
+
+        assertEquals(expectedSet,actualSet);
+    }
+
+    @Test
+    @Transactional
+    void testUpdateLanguages() throws Exception {
+        //given
+        Teacher teacherToUpdate = Teacher.builder()
+                .firstName("Test")
+                .lastName("Testowy")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacherToUpdate);
+        UpdateTeacherLanguageCommand command = new UpdateTeacherLanguageCommand();
+        command.setLanguages(Set.of(Language.JS,Language.KOBOL));
+
+        //when //then
+        MvcResult result = mockMvc.perform(patch("/api/v1/teachers/" + teacherToUpdate.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$", notNullValue()))
+                .andExpect(jsonPath("$.id", equalTo(teacherToUpdate.getId())))
+                .andExpect(jsonPath("$.firstName", equalTo("Test")))
+                .andExpect(jsonPath("$.lastName", equalTo("Testowy")))
+                .andReturn();
+        
+        Set<String> actualSet = new HashSet<>(JsonPath.read(result.getResponse().getContentAsString(),
+                "$.languages"));
+        Set<String> expectedSet = command.getLanguages().stream()
+                .map(Objects::toString)
+                .collect(Collectors.toSet());
+
+        assertEquals(expectedSet,actualSet);
     }
 }

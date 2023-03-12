@@ -83,7 +83,8 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public Lesson findById(int id) {
         return lessonRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("No such lesson with Id" + id));
+                .orElseThrow(() -> new EntityNotFoundException(MessageFormat
+                        .format("Lesson with id={0} has not been found", id)));
     }
 
     @Override

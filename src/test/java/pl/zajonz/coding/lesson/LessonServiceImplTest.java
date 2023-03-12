@@ -261,8 +261,7 @@ class LessonServiceImplTest {
         Lesson lessonToUpdate = Lesson.builder()
                 .term(date)
                 .build();
-        String exceptionMsg = MessageFormat
-                .format("Lesson with id={0} has not been found", lessonId);
+        String exceptionMsg = "Lesson with id=1 has not been found";
 
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
         //when //then
@@ -345,14 +344,14 @@ class LessonServiceImplTest {
     }
 
     @Test
-    void testFindById_IncorrectId_ResultsInNoSuchElementException() {
+    void testFindById_IncorrectId_ResultsInEntityNotFoundException() {
         //given
         int lessonId = 1;
-        String exceptionMsg = "No such lesson with Id" + lessonId;
+        String exceptionMsg = "Lesson with id=1 has not been found";
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
         //then //when
-        NoSuchElementException exception = assertThrows(
-                NoSuchElementException.class,
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
                 () -> lessonServiceImpl.findById(lessonId));
         assertEquals(exceptionMsg, exception.getMessage());
     }

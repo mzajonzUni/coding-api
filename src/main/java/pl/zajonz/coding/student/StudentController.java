@@ -37,6 +37,7 @@ public class StudentController {
     }
 
     @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public StudentDto update(@PathVariable int id, @RequestBody @Valid UpdateStudentCommand command) {
         Student toUpdate = command.toEntity();
         return StudentDto.fromEntity(studentService.update(id, toUpdate));

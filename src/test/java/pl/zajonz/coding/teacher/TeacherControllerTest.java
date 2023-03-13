@@ -2,33 +2,30 @@ package pl.zajonz.coding.teacher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import com.mysql.cj.xdevapi.JsonArray;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.thymeleaf.spring6.expression.Mvc;
 import pl.zajonz.coding.common.Language;
 import pl.zajonz.coding.teacher.model.Teacher;
 import pl.zajonz.coding.teacher.model.command.CreateTeacherCommand;
 import pl.zajonz.coding.teacher.model.command.UpdateTeacherCommand;
 import pl.zajonz.coding.teacher.model.command.UpdateTeacherLanguageCommand;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -100,6 +97,7 @@ class TeacherControllerTest {
     }
 
     @Test
+    @Transactional
     void testFindByIdNotFound() throws Exception {
         //given
 //        when(teacherRepositoryMock.findById(anyInt())).thenReturn(Optional.empty());
@@ -152,6 +150,20 @@ class TeacherControllerTest {
         deletedTeacher.ifPresent(value -> assertTrue(value.isDeleted()));
     }
 
+    @Test
+    @Transactional
+    void testDelete_IncorrectTeacher() throws Exception {
+        //given
+        teacherRepository.deleteById(1);
+        //when //then
+        mockMvc.perform(delete("/api/v1/teachers/1"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message",
+                        equalTo("No class pl.zajonz.coding.teacher.model.Teacher entity with id 1 exists")));
+    }
+
 
     @Test
     @Transactional
@@ -186,7 +198,28 @@ class TeacherControllerTest {
                 .map(Objects::toString)
                 .collect(Collectors.toSet());
 
-        assertEquals(expectedSet,actualSet);
+        assertEquals(expectedSet, actualSet);
+    }
+
+    @Test
+    @Transactional
+    void testUpdate_IncorrectTeacher() throws Exception {
+        //given
+        teacherRepository.deleteById(1);
+        UpdateTeacherCommand command = new UpdateTeacherCommand();
+        command.setFirstName("Test");
+        command.setLastName("Testowy");
+        command.setLanguages(Set.of(Language.JS));
+
+        //when //then
+        mockMvc.perform(patch("/api/v1/teachers/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message",
+                        equalTo("Teacher with id=1 has not been found")));
     }
 
     @Test
@@ -200,7 +233,7 @@ class TeacherControllerTest {
                 .build();
         teacherRepository.save(teacherToUpdate);
         UpdateTeacherLanguageCommand command = new UpdateTeacherLanguageCommand();
-        command.setLanguages(Set.of(Language.JS,Language.KOBOL));
+        command.setLanguages(Set.of(Language.JS, Language.KOBOL));
 
         //when //then
         MvcResult result = mockMvc.perform(patch("/api/v1/teachers/" + teacherToUpdate.getId())
@@ -213,13 +246,32 @@ class TeacherControllerTest {
                 .andExpect(jsonPath("$.firstName", equalTo("Test")))
                 .andExpect(jsonPath("$.lastName", equalTo("Testowy")))
                 .andReturn();
-        
+
         Set<String> actualSet = new HashSet<>(JsonPath.read(result.getResponse().getContentAsString(),
                 "$.languages"));
         Set<String> expectedSet = command.getLanguages().stream()
                 .map(Objects::toString)
                 .collect(Collectors.toSet());
 
-        assertEquals(expectedSet,actualSet);
+        assertEquals(expectedSet, actualSet);
+    }
+
+    @Test
+    @Transactional
+    void testUpdateLanguages_IncorrectTeacher() throws Exception {
+        //given
+        teacherRepository.deleteById(1);
+        UpdateTeacherLanguageCommand command = new UpdateTeacherLanguageCommand();
+        command.setLanguages(Set.of(Language.JS, Language.KOBOL));
+
+        //when //then
+        mockMvc.perform(patch("/api/v1/teachers/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message",
+                        equalTo("Teacher with id=1 has not been found")));
     }
 }

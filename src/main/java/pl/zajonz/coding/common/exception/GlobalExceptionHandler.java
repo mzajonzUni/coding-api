@@ -11,9 +11,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = {EntityNotFoundException.class, EmptyResultDataAccessException.class})
+    @ExceptionHandler(value = {EntityNotFoundException.class})
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorMessage handleEntityNotFoundException(EntityNotFoundException ex) {
+        return new ErrorMessage(ex.getMessage());
+    }
+    @ExceptionHandler(value = {EmptyResultDataAccessException.class})
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    public ErrorMessage handleEmptyResultDataAccessException(EmptyResultDataAccessException ex) {
         return new ErrorMessage(ex.getMessage());
     }
 

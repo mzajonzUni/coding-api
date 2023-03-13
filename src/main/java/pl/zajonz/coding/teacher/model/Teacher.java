@@ -41,6 +41,13 @@ public class Teacher {
     @OneToMany(mappedBy = "teacher")
     private Set<Student> students;
 
+    public Teacher(int id, String firstName, String lastName, boolean deleted) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.deleted = deleted;
+    }
+
     public String toString() {
         return firstName + " " + lastName;
     }

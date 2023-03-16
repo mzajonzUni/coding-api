@@ -18,10 +18,10 @@ public class CreateStudentCommand {
     @Pattern(regexp = "[A-Z][a-z]{1,20}", message = "last name has to match the pattern")
     private String lastName;
 
-    @NotNull(message = "language cannot be blank")
+    @NotNull(message = "language cannot be null")
     private Language language;
 
-    @NotNull(message = "teacher id cannot be null")
+
     @Min(value = 1, message = "teacher id must be equal to or greater than 1")
     private int teacherId;
 

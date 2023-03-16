@@ -15,11 +15,11 @@ import pl.zajonz.coding.student.model.command.UpdateStudentCommand;
 import pl.zajonz.coding.teacher.TeacherRepository;
 import pl.zajonz.coding.teacher.model.Teacher;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -50,15 +50,14 @@ class StudentControllerTest {
                 .build();
         studentRepository.save(student);
 
-//        List<Student> students = List.of(student);
-//        when(studentRepository.findAllByDeletedFalse()).thenReturn(students);
+        List<Student> students = List.of(student);
 
         //when //then
         mockMvc.perform(get("/api/v1/students"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-//                .andExpect(jsonPath("$", hasSize(students.size())))
+                .andExpect(jsonPath("$", hasSize(students.size())))
                 .andExpect(jsonPath("$.[0]", notNullValue()))
                 .andExpect(jsonPath("$.[0].id", equalTo(1)))
                 .andExpect(jsonPath("$.[0].lastName", equalTo("Testowy")));
@@ -73,11 +72,7 @@ class StudentControllerTest {
                 .lastName("Testowy")
                 .language(Language.JAVA)
                 .build();
-
         studentRepository.save(student);
-
-//        when(studentRepository.findById(1)).thenReturn(Optional.of(student));
-
 
         //when //then
         mockMvc.perform(get("/api/v1/students/1"))
@@ -91,19 +86,17 @@ class StudentControllerTest {
     @Test
     void testFindByIdNotFound() throws Exception {
         //given
-//        when(studentRepository.findById(1)).thenReturn(Optional.empty());
 
         //when //then
-        mockMvc.perform(get("/api/v1/students/0"))
+        mockMvc.perform(get("/api/v1/students/100"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
-                .andExpect(jsonPath("$.message", equalTo("Student with id=0 has not been found")));
+                .andExpect(jsonPath("$.message", equalTo("Student with id=100 has not been found")));
     }
 
     @Test
-    @Transactional
-    void testCreate() throws Exception {
+    void testCreate_CorrectValues() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
                 .firstName("Testa")
@@ -130,8 +123,7 @@ class StudentControllerTest {
     }
 
     @Test
-    @Transactional
-    void testUpdate() throws Exception {
+    void testUpdate_CorrectValues() throws Exception {
         //given
         Student student = Student.builder()
                 .firstName("First")
@@ -144,46 +136,44 @@ class StudentControllerTest {
         command.setFirstName("Test");
 
         //when //then
-        mockMvc.perform(put("/api/v1/students/" + student.getId())
+        mockMvc.perform(put("/api/v1/students/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(command)))
                 .andDo(print())
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$", notNullValue()))
-                .andExpect(jsonPath("$.id", equalTo(student.getId())))
+                .andExpect(jsonPath("$.id", equalTo(1)))
                 .andExpect(jsonPath("$.firstName", equalTo("Test")))
                 .andExpect(jsonPath("$.lastName", equalTo("Testowy")));
     }
 
     @Test
-    @Transactional
     void testUpdate_IncorrectStudent() throws Exception {
         //given
-        studentRepository.deleteById(1);
         UpdateStudentCommand command = new UpdateStudentCommand();
         command.setLastName("Testowy");
         command.setFirstName("Test");
 
         //when //then
-        mockMvc.perform(put("/api/v1/students/1")
+        mockMvc.perform(put("/api/v1/students/100")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(command)))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
                 .andExpect(jsonPath("$.message",
-                        equalTo("Student with id=1 has not been found")));
+                        equalTo("Student with id=100  has not been found")));
     }
 
     @Test
-    @Transactional
-    void testDelete() throws Exception {
+    void testDelete_CorrectValues() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
                 .firstName("FirstTest")
                 .lastName("LastTest")
                 .languages(Set.of(Language.JAVA, Language.KOBOL))
                 .build();
+        teacherRepository.save(teacher);
         Student student = Student.builder()
                 .firstName("Test")
                 .lastName("Testowy")
@@ -193,24 +183,23 @@ class StudentControllerTest {
         studentRepository.save(student);
 
         //when //then
-        mockMvc.perform(delete("/api/v1/students/" + student.getId()))
+        mockMvc.perform(delete("/api/v1/students/1"))
                 .andDo(print())
                 .andExpect(status().isNoContent());
-        Optional<Student> deletedStudent = studentRepository.findById(teacher.getId());
+        Optional<Student> deletedStudent = studentRepository.findById(1);
         deletedStudent.ifPresent(value -> assertTrue(value.isDeleted()));
     }
 
     @Test
-    @Transactional
     void testDelete_IncorrectStudent() throws Exception {
         //given
-        studentRepository.deleteById(1);
+
         //when //then
-        mockMvc.perform(delete("/api/v1/students/1"))
+        mockMvc.perform(delete("/api/v1/students/100"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
                 .andExpect(jsonPath("$.message",
-                        equalTo("No class pl.zajonz.coding.student.model.Student entity with id 1 exists")));
+                        equalTo("No class pl.zajonz.coding.student.model.Student entity with id 100 exists")));
     }
 }

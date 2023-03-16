@@ -2,7 +2,6 @@ package pl.zajonz.coding.lesson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,11 +19,11 @@ import pl.zajonz.coding.teacher.TeacherRepository;
 import pl.zajonz.coding.teacher.model.Teacher;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -45,13 +44,11 @@ class LessonControllerTest {
     private TeacherRepository teacherRepository;
     @Autowired
     private StudentRepository studentRepository;
-
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
-    @Transactional
-    void testFindAll() throws Exception {
+    void testFindAll_CorrectValues() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
                 .id(1)
@@ -74,23 +71,20 @@ class LessonControllerTest {
                 .term(LocalDateTime.now())
                 .build();
         lessonRepository.save(lesson);
-
-//        List<Lesson> lessons = List.of(lesson);
-//
-//        when(lessonRepository.findAllByDeletedFalse()).thenReturn(lessons);
+        List<Lesson> lessons = List.of(lesson);
 
         //when //then
         mockMvc.perform(get("/api/v1/lessons"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$", hasSize(lessons.size())))
                 .andExpect(jsonPath("$.[0]", notNullValue()))
                 .andExpect(jsonPath("$.[0].id", equalTo(1)));
     }
 
     @Test
-    @Transactional
-    void testFindById() throws Exception {
+    void testFindById_CorrectValues() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
                 .id(1)
@@ -112,9 +106,6 @@ class LessonControllerTest {
                 .term(LocalDateTime.now())
                 .build();
         lessonRepository.save(lesson);
-
-//        when(lessonRepository.findById(1)).thenReturn(Optional.of(lesson));
-
 
         //when //then
         mockMvc.perform(get("/api/v1/lessons/" + lesson.getId()))
@@ -129,24 +120,40 @@ class LessonControllerTest {
     @Test
     void testFindByIdNotFound() throws Exception {
         //given
-//        when(lessonRepository.findById(1)).thenReturn(Optional.empty());
 
         //when //then
-        mockMvc.perform(get("/api/v1/lessons/0"))
+        mockMvc.perform(get("/api/v1/lessons/100"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
-                .andExpect(jsonPath("$.message", equalTo("Lesson with id=0 has not been found")));
+                .andExpect(jsonPath("$.message", equalTo("Lesson with id=100 has not been found")));
     }
 
     @Test
-    @Transactional
-    void testCreate() throws Exception {
+    void testCreate_CorrectValues() throws Exception {
         //given
+        LocalDateTime date = LocalDateTime.now().plusDays(20);
+        Teacher teacher = Teacher.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacher);
+        Student student = Student.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .language(Language.JAVA)
+                .build();
+        studentRepository.save(student);
         CreateLessonCommand command = new CreateLessonCommand();
         command.setTeacherId(1);
         command.setStudentId(1);
-        command.setTerm(LocalDateTime.now().plusDays(20));
+        command.setTerm(date);
+
+        String dateTerm = date.toString();
+        dateTerm = dateTerm.substring(0,dateTerm.length()-2);
 
         //when //then
 
@@ -156,11 +163,125 @@ class LessonControllerTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$", notNullValue()))
-                .andExpect(jsonPath("$.term").exists());
+                .andExpect(jsonPath("$.student").exists())
+                .andExpect(jsonPath("$.teacher").exists())
+                .andExpect(jsonPath("$.term").exists())
+                .andExpect(jsonPath("$.term", equalTo(dateTerm)));;
     }
 
     @Test
-    @Transactional
+    void testCreate_IncorrectStudent_ShouldThrowEntityNotFoundException() throws Exception {
+        //given
+        Teacher teacher = Teacher.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacher);
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(2);
+        command.setTerm(LocalDateTime.now().plusDays(20));
+
+        //when //then
+
+        mockMvc.perform(post("/api/v1/lessons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message", equalTo("Student with id=2 has not been found")));
+    }
+
+    @Test
+    void testCreate_IncorrectTeacher_ShouldThrowEntityNotFoundException() throws Exception {
+        //given
+        LocalDateTime date = LocalDateTime.now().plusDays(20);
+        Student student = Student.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .language(Language.JAVA)
+                .build();
+        studentRepository.save(student);
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(date);
+
+        //when //then
+
+        mockMvc.perform(post("/api/v1/lessons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message", equalTo("Teacher with id=1 has not been found")));
+    }
+
+    @Test
+    void testCreate_TermInPast_ShouldThrowInvalidDateException() throws Exception {
+        //given
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(LocalDateTime.now().minusDays(20));
+
+        //when //then
+
+        mockMvc.perform(post("/api/v1/lessons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message", equalTo("Invalid date " + command.getTerm())));
+    }
+
+    @Test
+    void testCreate_TermIsOccupied_ShouldThrowInvalidDateException() throws Exception {
+        //given
+        Student student = Student.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .language(Language.JAVA)
+                .build();
+        studentRepository.save(student);
+        Teacher teacher = Teacher.builder()
+                .id(1)
+                .firstName("Test")
+                .lastName("Testowy")
+                .languages(Set.of(Language.JAVA))
+                .build();
+        teacherRepository.save(teacher);
+        Lesson lesson = Lesson.builder()
+                .student(student)
+                .teacher(teacher)
+                .term(LocalDateTime.now().plusDays(10))
+                .build();
+        lessonRepository.save(lesson);
+        CreateLessonCommand command = new CreateLessonCommand();
+        command.setTeacherId(1);
+        command.setStudentId(1);
+        command.setTerm(LocalDateTime.now().plusDays(10));
+
+        //when //then
+
+        mockMvc.perform(post("/api/v1/lessons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp", notNullValue()))
+                .andExpect(jsonPath("$.message", equalTo("Invalid date " + command.getTerm())));
+    }
+
+
+    @Test
     void testDeleteLesson() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
@@ -178,39 +299,37 @@ class LessonControllerTest {
                 .build();
         studentRepository.save(student);
         Lesson lesson = Lesson.builder()
+                .id(1)
                 .student(student)
                 .teacher(teacher)
                 .term(LocalDateTime.now().plusDays(10))
                 .build();
         lessonRepository.save(lesson);
 
-//        when(lessonRepository.findById(anyInt())).thenReturn(Optional.of(lesson));
-
         //when //then
-        mockMvc.perform(delete("/api/v1/lessons/" + lesson.getId()))
+        mockMvc.perform(delete("/api/v1/lessons/1"))
                 .andDo(print())
-                .andExpect(status().isNoContent());
-        Optional<Lesson> deletedLesson = lessonRepository.findById(teacher.getId());
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        Optional<Lesson> deletedLesson = lessonRepository.findById(1);
         deletedLesson.ifPresent(value -> assertTrue(value.isDeleted()));
     }
 
     @Test
-    @Transactional
     void testDeleteLesson_IncorrectId() throws Exception {
         //given
-//        when(lessonRepository.findById(anyInt())).thenReturn(Optional.empty());
 
         //when //then
-        mockMvc.perform(delete("/api/v1/lessons/0"))
+        mockMvc.perform(delete("/api/v1/lessons/100"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp", notNullValue()))
                 .andExpect(jsonPath("$.message",
-                        equalTo("Lesson with id=0 has not been found")));
+                        equalTo("Lesson with id=100 has not been found")));
     }
 
     @Test
-    @Transactional
     void testDeleteLesson_TermInPast() throws Exception {
         //given
         Teacher teacher = Teacher.builder()
@@ -235,7 +354,6 @@ class LessonControllerTest {
                 .build();
         lessonRepository.save(lesson);
 
-//        when(lessonRepository.findById(anyInt())).thenReturn(Optional.of(lesson));
 
         //when //then
         mockMvc.perform(delete("/api/v1/lessons/1"))
@@ -247,7 +365,6 @@ class LessonControllerTest {
     }
 
     @Test
-    @Transactional
     void testUpdateTerm() throws Exception{
         //given
         Student student = Student.builder()
@@ -288,4 +405,5 @@ class LessonControllerTest {
         LocalDateTime termReturned = LocalDateTime.parse(term);
         assertEquals(command.getTerm(),termReturned);
     }
+
 }

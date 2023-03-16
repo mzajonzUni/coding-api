@@ -16,6 +16,7 @@ public class GlobalExceptionHandler {
     public ErrorMessage handleEntityNotFoundException(EntityNotFoundException ex) {
         return new ErrorMessage(ex.getMessage());
     }
+
     @ExceptionHandler(value = {EmptyResultDataAccessException.class})
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ErrorMessage handleEmptyResultDataAccessException(EmptyResultDataAccessException ex) {
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ErrorMessage handleIllegalArgumentException(IllegalArgumentException ex){
+    public ErrorMessage handleIllegalArgumentException(IllegalArgumentException ex) {
         return new ErrorMessage(ex.getMessage());
     }
 }

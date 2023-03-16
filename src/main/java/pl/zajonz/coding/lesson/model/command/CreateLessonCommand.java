@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
 
 @Data
 public class CreateLessonCommand {
-    @NotNull(message = "student id cannot be null")
+
     @Min(value = 1, message = "student id must be equal to or greater than 1")
-    private Integer studentId;
-    @NotNull(message = "teacher id cannot be null")
+    private int studentId;
+
     @Min(value = 1, message = "teacher id must be equal to or greater than 1")
-    private Integer teacherId;
+    private int teacherId;
     @NotNull(message = "term cannot be null")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime term;

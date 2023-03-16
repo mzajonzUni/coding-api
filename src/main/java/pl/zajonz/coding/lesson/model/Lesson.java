@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @Entity
-@SQLDelete(sql = "UPDATE coding_db.lesson SET deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE lesson SET deleted = true WHERE id=?")
 public class Lesson {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
